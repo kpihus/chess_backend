@@ -31,12 +31,19 @@ describe('DAO', function () {
       })
   })
 
-  it.only('Should insert initial state of pieces', ()=> {
+  it('Should insert initial state of pieces', ()=> {
     return dao.storeSetOfPieces(1)
       .then(res => {
         console.log(res)
       });
   });
+
+  it.only('Find piece by pos', function () {
+    return dao.findPieceOnPos(10)
+      .then(res => {
+        console.log(res);
+      })
+  })
 
 
 });

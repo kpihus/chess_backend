@@ -1,11 +1,11 @@
-const knexConf =  require('./knexfile').development;
+const knexConf = require('./knexfile').development;
 const knex = require('knex')(knexConf);
 
-const storeGame = async(player) => {
+const storeGame = async (player) => {
   const result = await knex('game').insert({
     player_name: player
   });
-  if(result.length){
+  if (result.length) {
     return {game_id: result[0]}
   }
   return {game_id: null}
@@ -16,46 +16,55 @@ const storeSetOfPieces = (game_id) => {
   const col = 'abcdefgh';
 
   set = set.split('/');
-  let id=0;
+  let id = 0;
   let rowId = 0;
   let colId = 0;
   const tasks = [];
-
 
   set.forEach(rowString => {
     rowId++;
     rowString.split('').forEach(piece => {
       colId++;
-      const pgn = `${col[colId-1]}${rowId}`;
-      console.log('p', piece, id) // TODO: REMOVE
-      if (piece !=='0') {
-        tasks.push(
-          knex('piece').insert({
-            name: piece,
-            is_white: piece.toLowerCase() === piece ? false : true,
-            game_id
-          })
-          .then(res => {
-            console.log(res);
-            return knex('position').insert({
-              to_pgn: pgn,
-              to_id: id++,
-              piece_id: res[0]
+      id++;
+
+      (function (id) {
+        const pgn = `${col[colId - 1]}${rowId}`;
+        console.log('p', piece, id) // TODO: REMOVE
+        if (piece !== '0') {
+          tasks.push(
+            knex('piece').insert({
+              name: piece,
+              is_white: piece.toLowerCase() === piece ? false : true,
+              game_id
             })
-          })
-        );
-      } else {
-        id++
-      }
+              .then(res => {
+                console.log(res);
+                return knex('position').insert({
+                  to_pgn: pgn,
+                  to_id: id,
+                  piece_id: res[0]
+                })
+              })
+          );
+        }
+      })(id)
     });
     colId = 0;
   });
   return Promise.all(tasks);
 };
 
+const findPieceOnPos = async (pos) => {
+  const piece = await knex('position').select('*')
+    .leftJoin('piece','position.piece_id','piece.id')
+    .where('to_id', '=', pos)
+
+  return piece;
+}
 
 
 module.exports = {
   storeGame,
-  storeSetOfPieces
+  storeSetOfPieces,
+  findPieceOnPos
 };
