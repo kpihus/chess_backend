@@ -56,15 +56,42 @@ const storeSetOfPieces = (game_id) => {
 
 const findPieceOnPos = async (pos) => {
   const piece = await knex('position').select('*')
-    .leftJoin('piece','position.piece_id','piece.id')
+    .leftJoin('piece', 'position.piece_id', 'piece.id')
     .where('to_id', '=', pos)
 
   return piece;
-}
+};
+
+const startNewGame = async (players) => {
+  const {player1, player2} = players;
+  //Set last ended
+  await knex('game')
+    .where('ended_at', null)
+    .update({
+      ended_at: new Date()
+    });
+  await knex('game')
+    .insert({
+      player1, player2
+    })
+};
+
+const updatePgn = async(pgn)=>{
+  await knex('game')
+    .where('ended_at', null)
+    .update({pgn})
+};
+
+const getHistory = async() => {
+  return await knex('game').select('*')
+};
 
 
 module.exports = {
   storeGame,
   storeSetOfPieces,
-  findPieceOnPos
+  findPieceOnPos,
+  startNewGame,
+  updatePgn,
+  getHistory
 };
